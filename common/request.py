@@ -59,10 +59,11 @@ class ApiRes:
         return self.parse_text()['errMsg']
 
     def data(self):
+        assert self.is_ok(), self.err_msg()
         return self.parse_text()['data']
 
     def parse_text(self):
         return json.loads(self.response.text)
 
-    def is_err(self):
+    def is_ok(self):
         return self.err_code() == 0

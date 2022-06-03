@@ -1,5 +1,11 @@
+import json
 import math
+import random
+import threading
 import time
+from hashlib import md5
+
+import uuid as uuid
 
 from common import request
 from common.client import Client
@@ -22,6 +28,7 @@ class User:
         self.pwd = pwd
         self.name = name
         self.token = None
+        self.client = None
 
     def login(self):
         assert self.user_id != '', '没有配置用户user_id'
@@ -29,17 +36,46 @@ class User:
         if self.token is None:
             self.get_token()
 
-        # 通过webSocket登录
-        print(self.token)
-        client = Client(user_id=self.user_id, token=self.token)
-        client.connect()
+        self.client = Client(user_id=self.user_id, token=self.token)
+        self.client.on_open(self.client_on_open)
+        self.client.connect()
 
     def get_token(self):
         data = {
             'secret': 'tuoyun',
-            'platform': 1,
+            'platform': 5,
             'userId': self.user_id,
             'operationID': str(math.floor(time.time()))
         }
         res = request.post(url=apis.user_token(), body=data)
         self.token = res.data()['token']
+        print(self.token)
+
+    def client_on_open(self, obj):
+        def send():
+            data = json.dumps({'userID': self.user_id, 'token': self.token})
+            self.client.send(self.build_send_data(data, 'Login'))
+            content = input('请输入要发送的内容：')
+            self.create_text_message(content)
+        threading.Thread(target=send).start()
+
+    def create_text_message(self, text):
+        self.client.send(self.build_send_data(text, 'CreateTextMessage'))
+
+    def send_message(self, message):
+        params = {
+            "recvID": "15810743632",
+            "groupID": "",
+            "offlinePushInfo": None,
+            "message": json.dumps(message),
+        }
+        self.client.send(params)
+
+    def build_send_data(self, data, func_name):
+        rand = math.floor(random.Random().random() * 10000)
+        return {
+            'reqFuncName': func_name,
+            'operationID': str(math.floor(time.time())) + f'{rand}',
+            'userID': self.user_id,
+            'data': data,
+        }

@@ -30,7 +30,6 @@ class Client:
 
     def send(self, data):
         self.ws.send(json.dumps(data))
-        self.ws.on_message = self.on_ws_message
         print(f'ws send done., {data}')
 
     def __on_ws_open(self, obj):

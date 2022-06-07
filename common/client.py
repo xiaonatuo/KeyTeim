@@ -4,6 +4,7 @@ import websocket
 from websocket import WebSocketApp
 
 from common.settings import Api
+from core import msg
 
 
 class Client:
@@ -11,48 +12,45 @@ class Client:
         self.user_id = user_id
         self.token = token
         # 初始化webSocket
-        #websocket.enableTrace(True)
+        # websocket.enableTrace(True)
         ws_url = Api.ws_url() + f'?sendID={user_id}&token={token}&platformID=5'
         self.ws = WebSocketApp(url=ws_url)
-        self.ws.on_open = self.on_open
-        self.ws.on_error = self.on_error
-        self.ws.on_message = self.on_message
-        self.ws.on_close = self.on_close
+        self.ws.on_open = self.__on_ws_open
+        self.ws.on_error = self.__on_ws_error
+        self.ws.on_message = self.__on_ws_message
+        self.ws.on_close = self.__on_ws_close
+
+        self.on_open = None
+        self.on_error = None
+        self.on_message = None
+        self.on_data = None
+        self.on_close = None
 
     def connect(self):
-        self.ws.run_forever(ping_timeout=1)
+        self.ws.run_forever()
 
     def send(self, data):
         self.ws.send(json.dumps(data))
-        self.ws.on_message = self.on_message
+        self.ws.on_message = self.on_ws_message
         print(f'ws send done., {data}')
 
-    def on_open(self, obj):
-        if callable(obj):
-            self.ws.on_open = obj
-        else:
-            print('IM server websocket is connected!')
+    def __on_ws_open(self, obj):
+        print('IM server websocket is connected!')
+        self.on_open(obj)
 
-    def on_error(self, obj, exception):
-        if callable(obj):
-            self.ws.on_error = obj
-        else:
-            print(f'[ON ERROR]:{exception}')
+    def __on_ws_error(self, obj, exception):
+        print(f'[ON ERROR]:{exception}')
+        self.on_error(obj, exception)
 
-    def on_message(self, obj, data):
-        if callable(obj):
-            self.ws.on_message = obj
-        else:
-            print(f'[ON MESSAGE]:{data}')
+    def __on_ws_message(self, obj, data):
+        print(f'[ON MESSAGE]:{data}')
+        msg.handler_recv_message(data)
+        self.on_message(data)
 
-    def on_data(self, obj, data):
-        if callable(obj):
-            self.ws.on_data = obj
-        else:
-            print(f'[ON DATA]:{data}')
+    def __on_ws_data(self, obj, data):
+        print(f'[ON DATA]:{data}')
+        self.on_data(data)
 
-    def on_close(self, obj, code, msg):
-        if callable(obj):
-            self.ws.on_close = obj
-        else:
-            print(f'IM server websocket is close! close code:{code}, close message:{msg}')
+    def __on_ws_close(self, obj, code, msg):
+        print(f'IM server websocket is close! close code:{code}, close message:{msg}')
+        self.on_close(msg)

@@ -1,6 +1,5 @@
 import json
 
-import websocket
 from websocket import WebSocketApp
 
 from common.settings import Api

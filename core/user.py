@@ -1,11 +1,7 @@
+import _thread
 import json
 import math
-import random
-import threading
 import time
-from hashlib import md5
-
-import uuid as uuid
 
 from common import request
 from common.client import Client
@@ -30,9 +26,11 @@ class User:
         self.user_id = user_id
         self.pwd = pwd
         self.name = name
+        self.on_msg = None
         self.__token = None
         self.__client = None
         self.__msg_wrapper = None
+        self.login_callback = None
 
     def login(self):
         """
@@ -47,7 +45,8 @@ class User:
         self.__msg_wrapper = MsgWrapper(self, self.__client)
         self.__client.on_open = self.on_server_connected
         self.__client.on_message = self.on_server_message
-        self.__client.connect()
+
+        _thread.start_new_thread(self.__client.connect, ())
 
     def __get_token(self):
         """
@@ -61,25 +60,30 @@ class User:
         }
         res = request.post(url=apis.user_token(), body=data)
         self.__token = res.data()['token']
-        print(self.__token)
 
     def on_server_connected(self, obj):
         """
         服务器连接成功事件回调函数
         """
-        def send():
-            data = json.dumps({'userID': self.user_id, 'token': self.__token})
-            self.__client.send(self.__msg_wrapper.wrapper_data(data, 'Login'))
-            content = input('请输入要发送的内容：')
-            self.send_text_message('13391990902', content)
-
-        threading.Thread(target=send).start()
+        print(f'服务器连接成功>>>>>>【{self.user_id}】')
+        data = json.dumps({'userID': self.user_id, 'token': self.__token})
+        self.__client.send(self.__msg_wrapper.wrapper_data(data, 'Login'))
 
     def on_server_message(self, message):
         """
         接收服务器消息
         """
-        pass
+        msg_obj = json.loads(message)
+        event = msg_obj['event']
+        if event == 'Login' and msg_obj['errCode'] == 0:
+            print(f'用户登录成功>>>>>>【{self.user_id}】')
+            if callable(self.login_callback):
+                self.login_callback()
+        else:
+            data = json.loads(msg_obj['data'])
+            content = data['content']
+            # print(f'recv<<<<<<【{self.user_id}】接收到了一条消息：{content}')
+            self.on_msg(content)
 
     def send_text_message(self, recv_user, message):
         """
@@ -90,5 +94,7 @@ class User:
             message: 要发送的消息
         """
         self.__msg_wrapper.send_text_message(recv_user, message)
+        print(f'send>>>>>>【{self.user_id}】向【{recv_user}】发送了消息：{message}')
 
-
+    def logout(self):
+        self.__client.close()

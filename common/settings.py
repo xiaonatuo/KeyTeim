@@ -12,12 +12,32 @@ def red_config(sections):
 class Base:
 
     @staticmethod
-    def output():
-        return red_config('Base')['output']
+    def login_timeout():
+        """
+        登录超时时间（单位：毫秒）
+        """
+        return red_config('Base')['login_timeout']
 
     @staticmethod
-    def log():
-        return red_config('Base')['log']
+    def samples_nums():
+        """
+        发送测试样本的数量
+        """
+        return red_config('Base')['samples_nums']
+
+    @staticmethod
+    def msg_send_interval():
+        """
+        消息发送时间间隔（单位：毫秒）
+        """
+        return red_config('Base')['msg_send_interval']
+
+    @staticmethod
+    def msg_recv_timeout():
+        """
+        消息接收超时时间(单位：毫秒)
+        """
+        return red_config('Base')['msg_recv_timeout']
 
 
 class Api:
@@ -26,20 +46,8 @@ class Api:
         return red_config('Api')['ws_url']
 
     @staticmethod
-    def user_register():
-        return red_config('Api')['user_register']
-
-    @staticmethod
     def user_token():
         return red_config('Api')['user_token']
-
-    @staticmethod
-    def user_login():
-        return red_config('Api')['user_login']
-
-    @staticmethod
-    def msg_send():
-        return red_config('Api')['msg_send']
 
 
 class Reliability:

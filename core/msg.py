@@ -20,6 +20,9 @@ def handler_recv_message(message):
         assert callable(callback), 'create text message callback is not a function!'
         callback(data['data'])
 
+    elif data['event'] in ['OnRecvNewMessage', 'Login']:
+        return message
+
 
 class MsgWrapper:
     """
@@ -96,9 +99,9 @@ class MsgWrapper:
     @staticmethod
     def wrapper_push_info(msg):
         return json.dumps({
-                    "title": "你收到一条消息",
-                    "desc": msg,
-                    "ex": "",
-                    "iOSPushSound": "+1",
-                    "iOSBadgeCount": True
-                })
+            "title": "你收到一条消息",
+            "desc": msg,
+            "ex": "",
+            "iOSPushSound": "+1",
+            "iOSBadgeCount": True
+        })

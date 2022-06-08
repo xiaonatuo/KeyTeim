@@ -30,25 +30,27 @@ class Client:
 
     def send(self, data):
         self.ws.send(json.dumps(data))
-        print(f'ws send done., {data}')
+
+    def close(self):
+        self.ws.close()
 
     def __on_ws_open(self, obj):
-        print('IM server websocket is connected!')
-        self.on_open(obj)
+        if callable(self.on_open):
+            self.on_open(obj)
 
     def __on_ws_error(self, obj, exception):
-        print(f'[ON ERROR]:{exception}')
-        self.on_error(obj, exception)
+        if callable(self.on_error):
+            self.on_error(obj, exception)
 
     def __on_ws_message(self, obj, data):
-        print(f'[ON MESSAGE]:{data}')
-        msg.handler_recv_message(data)
-        self.on_message(data)
+        new_msg = msg.handler_recv_message(data)
+        if new_msg is not None and new_msg != '' and callable(self.on_message):
+            self.on_message(new_msg)
 
     def __on_ws_data(self, obj, data):
-        print(f'[ON DATA]:{data}')
-        self.on_data(data)
+        if callable(self.on_data):
+            self.on_data(data)
 
     def __on_ws_close(self, obj, code, msg):
-        print(f'IM server websocket is close! close code:{code}, close message:{msg}')
-        self.on_close(msg)
+        if callable(self.on_close):
+            self.on_close(msg)

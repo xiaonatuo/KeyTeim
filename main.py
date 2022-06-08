@@ -182,6 +182,7 @@ class Samples:
     """
     消息样本
     """
+
     def __init__(self, text):
         """
         Parameters:
@@ -206,7 +207,7 @@ class Samples:
             'create_time': self.create_time,
             'send_time': self.send_time,
             'recv_time': self.recv_time
-        })
+        }, ensure_ascii=False)
 
 
 if __name__ == '__main__':
